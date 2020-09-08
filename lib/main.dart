@@ -31,8 +31,12 @@ class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
   final _saved = Set<WordPair>();
   final _biggerFont = TextStyle(fontSize: 18.0);
-  final _chatHistory = <Bubble>[];
+  final _chatHistory = List<String>();
   final _entry = GlobalKey<FormState>();
+  final myController = TextEditingController();
+  final appBarHeight = AppBar(
+    title: Text('Chatty'),
+  ).preferredSize.height;
 
   Widget _buildSuggestions() {
     return ListView.builder(
@@ -105,33 +109,57 @@ class _RandomWordsState extends State<RandomWords> {
     );
   }
 
-  void addToList() {
-  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Every chat with gf'),
-      ),
-      bottomSheet: Container(
-        height: 50,
-        color: Colors.green[50],
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: TextField(
-            onSubmitted: (double) {
-              setState(() {
-                _chatHistory.add(Bubble(child: (Text(double))));
-              });
-            },
-          ),
+        appBar: AppBar(
+          title: Text('Chatty'),
         ),
-      ),
-      body: ListView(
-        children:
-          _chatHistory,
-      ),
-    );
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            setState(() {
+              _chatHistory.add(myController.text);
+            });
+            myController.clear();
+          },
+          tooltip: 'Increment',
+          child: Icon(Icons.arrow_right_alt_outlined),
+        ), // T
+        body: SingleChildScrollView(
+            child: Container(
+          height: MediaQuery.of(context).size.height - appBarHeight - 25,
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              Flexible(
+                  child: ListView(
+                shrinkWrap: true,
+                reverse: false,
+                children: _chatHistory.map((message) => Bubble(child: Text(message))).toList(),
+              )),
+          Container(
+            height: 50,
+            color: Colors.green[50],
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: TextField(
+                controller: myController,
+                onSubmitted: (chatText) {
+                  setState(() {
+                    _chatHistory.add(chatText);
+                  });
+                  myController.clear();
+                },
+              ),
+            ),
+          )
+            ],
+          ),
+        )));
   }
 }
