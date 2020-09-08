@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
 import 'package:bubble/bubble.dart';
+import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 
 void main() => runApp(MyApp());
 
@@ -109,10 +110,6 @@ class _RandomWordsState extends State<RandomWords> {
     );
   }
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,33 +128,35 @@ class _RandomWordsState extends State<RandomWords> {
         ), // T
         body: SingleChildScrollView(
             child: Container(
-          height: MediaQuery.of(context).size.height - appBarHeight - 25,
-          width: MediaQuery.of(context).size.width,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Flexible(
+              Container(
+                  height: MediaQuery.of(context).size.height - appBarHeight - 25,
+                  width: MediaQuery.of(context).size.width,
                   child: ListView(
                 shrinkWrap: true,
                 reverse: false,
-                children: _chatHistory.map((message) => Bubble(child: Text(message))).toList(),
+                children: _chatHistory
+                    .map((message) => Bubble(child: Text(message)))
+                    .toList(),
               )),
-          Container(
-            height: 50,
-            color: Colors.green[50],
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: TextField(
-                controller: myController,
-                onSubmitted: (chatText) {
-                  setState(() {
-                    _chatHistory.add(chatText);
-                  });
-                  myController.clear();
-                },
-              ),
-            ),
-          )
+              Container(
+                height: 50,
+                color: Colors.green[50],
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: TextField(
+                    controller: myController,
+                    onSubmitted: (chatText) {
+                      setState(() {
+                        _chatHistory.add(chatText);
+                      });
+                      myController.clear();
+                    },
+                  ),
+                ),
+              )
             ],
           ),
         )));
