@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
 import 'package:bubble/bubble.dart';
-import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
+import 'package:emoji_picker/emoji_picker.dart';
 
 void main() => runApp(MyApp());
 
@@ -38,6 +38,8 @@ class _RandomWordsState extends State<RandomWords> {
   final appBarHeight = AppBar(
     title: Text('Chatty'),
   ).preferredSize.height;
+  bool _showEmojis = false;
+  double _emojiPickerHeight = 0;
 
   Widget _buildSuggestions() {
     return ListView.builder(
@@ -113,39 +115,39 @@ class _RandomWordsState extends State<RandomWords> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Chatty'),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            setState(() {
-              _chatHistory.add(myController.text);
-            });
-            myController.clear();
-          },
-          tooltip: 'Increment',
-          child: Icon(Icons.arrow_right_alt_outlined),
-        ), // T
-        body: SingleChildScrollView(
-            child: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
+      appBar: AppBar(
+        title: Text('Chatty'),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _chatHistory.add(myController.text);
+          });
+          myController.clear();
+        },
+        tooltip: 'Increment',
+        child: Icon(Icons.arrow_right_alt_outlined),
+      ), // T
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              reverse: false,
+              children: _chatHistory
+                  .map((message) => Bubble(child: Text(message)))
+                  .toList(),
+            ),
+          ),
+          Container(
+            height: 50,
+            color: Colors.green[50],
+            child: Row(children: [
               Container(
-                  height: MediaQuery.of(context).size.height - appBarHeight - 25,
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView(
-                shrinkWrap: true,
-                reverse: false,
-                children: _chatHistory
-                    .map((message) => Bubble(child: Text(message)))
-                    .toList(),
-              )),
-              Container(
-                height: 50,
-                color: Colors.green[50],
-                child: Align(
-                  alignment: Alignment.bottomCenter,
+                  width: 100,
+                  color: Colors.red[50],
                   child: TextField(
                     controller: myController,
                     onSubmitted: (chatText) {
@@ -154,11 +156,42 @@ class _RandomWordsState extends State<RandomWords> {
                       });
                       myController.clear();
                     },
-                  ),
+                  )),
+              FlatButton(
+                onPressed: () {
+                  setState(() {
+                    _showEmojis = !(_showEmojis);
+                  });
+                  if(_showEmojis == true){
+                    setState(() {
+                      _emojiPickerHeight = 210;
+                    });
+                  } else {
+                    setState(() {
+                      _emojiPickerHeight = 0;
+                    });
+                  }
+                },
+                child: Text(
+                  "Flat Button",
                 ),
               )
-            ],
+            ]),
           ),
-        )));
+          Container(
+            height: _emojiPickerHeight,
+            child: EmojiPicker(
+              rows: 3,
+              columns: 7,
+              recommendKeywords: ["racing", "horse"],
+              numRecommended: 10,
+              onEmojiSelected: (emoji, category) {
+                print(emoji);
+              },
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
