@@ -40,6 +40,7 @@ class _RandomWordsState extends State<RandomWords> {
   ).preferredSize.height;
   bool _showEmojis = false;
   double _emojiPickerHeight = 0;
+  final _markedMessages = List<int>();
 
   Widget _buildSuggestions() {
     return ListView.builder(
@@ -116,29 +117,57 @@ class _RandomWordsState extends State<RandomWords> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.add_alert),
+            tooltip: 'Show Snackbar',
+
+          ),
+          IconButton(
+            icon: const Icon(Icons.navigate_next),
+            tooltip: 'Next page',
+
+          ),
+        ],
         title: Text('Chatty'),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _chatHistory.add(myController.text);
-          });
-          myController.clear();
-        },
-        tooltip: 'Increment',
-        child: Icon(Icons.arrow_right_alt_outlined),
-      ), // T
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Expanded(
-            child: ListView(
+            child: ListView.builder(
+              itemBuilder: (BuildContext context, int index) {
+                Color color = Colors.white;
+                if (_markedMessages.contains(index)){
+                  color = Colors.yellow;
+                }
+                return GestureDetector(
+                  onLongPress: () {
+                    if(_markedMessages.contains(index)){
+                      setState(() {
+                        _markedMessages.remove(index);
+                      });
+                    } else {
+                      setState(() {
+                        _markedMessages.add(index);
+                      });
+                    }
+                    },
+                  child: Bubble(
+                      color: color,
+                      child: Text(_chatHistory[index])),
+                  //_chatHistory
+                  //    .map((message) => Bubble(child: Text(message)))
+                  //    .toList(),
+                  onTap: () => Scaffold
+                      .of(context)
+                      .showSnackBar(SnackBar(content: Text(index.toString()))),
+                );
+              },
+              itemCount: _chatHistory.length,
               shrinkWrap: true,
-              reverse: false,
-              children: _chatHistory
-                  .map((message) => Bubble(child: Text(message)))
-                  .toList(),
+              reverse: true,
             ),
           ),
           Container(
@@ -149,6 +178,12 @@ class _RandomWordsState extends State<RandomWords> {
                   width: 100,
                   color: Colors.red[50],
                   child: TextField(
+                    onTap: () {
+                      setState(() {
+                        _emojiPickerHeight = 0;
+                        _showEmojis = false;
+                      });
+                    },
                     controller: myController,
                     onSubmitted: (chatText) {
                       setState(() {
@@ -164,16 +199,23 @@ class _RandomWordsState extends State<RandomWords> {
                   });
                   if(_showEmojis == true){
                     setState(() {
-                      _emojiPickerHeight = 210;
+                      _emojiPickerHeight = 211;
                     });
                   } else {
                     setState(() {
                       _emojiPickerHeight = 0;
                     });
+                    }
+                  FocusScopeNode currentFocus = FocusScope.of(context);
+
+                  if (!currentFocus.hasPrimaryFocus) {
+                    currentFocus.unfocus();
+                    setState(() {
+                    });
                   }
                 },
                 child: Text(
-                  "Flat Button",
+                  "Emotes",
                 ),
               )
             ]),
@@ -186,7 +228,7 @@ class _RandomWordsState extends State<RandomWords> {
               recommendKeywords: ["racing", "horse"],
               numRecommended: 10,
               onEmojiSelected: (emoji, category) {
-                print(emoji);
+                myController.text = myController.text + emoji.emoji;
               },
             ),
           )
