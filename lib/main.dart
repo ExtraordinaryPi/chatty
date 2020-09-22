@@ -10,6 +10,7 @@ import 'package:share/share.dart';
 import 'package:flutter_link_preview/flutter_link_preview.dart';
 import 'package:http/http.dart' as http;
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'WebMetaInfo.dart';
 
 void main() => runApp(MyApp());
 
@@ -41,48 +42,37 @@ class _RandomWordsState extends State<RandomWords> {
   bool _showEmojis = false;
   double _emojiPickerHeight = 0;
   final _markedMessages = List<int>();
+  final _metaInfoCacheIndex = List<int>();
   double _previewHeight = 0;
   bool _previewGate = false;
-  String _linkTitle = "";
-  String _linkImage;
-  RegExp regExp = new RegExp(
-    r"((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)",
-    caseSensitive: false,
-    multiLine: false,
-  );
   String _oldString;
+  WebMetaInfo _webMetaInfo = WebMetaInfo(null, null, null);
+  final _metaInfoCacheMap = Map<int, WebMetaInfo>();
 
-
-  _superTest(String chatText, int index) {
-    RegExp regExp = new RegExp(
-      r"((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)",
-      caseSensitive: false,
-      multiLine: false,
-    );
-
-    if (regExp.hasMatch(chatText)) {
-      return FlutterLinkPreview(
-        url: chatText,
-        titleStyle: TextStyle(
-          color: Colors.blue,
-          fontWeight: FontWeight.bold,
-        ),
-      );
-    } else {
-      return Text(_chatHistory[index]);
-    }
-  }
 
   void _getHttpTest(String url) async {
     try {
-      var data = await extract(url); // Use the extract() function to fetch data from the url
-      setState(() {
-        _linkTitle = data.title;
-        _linkImage = data.image;
+      _webMetaInfo.getMetaInfo(url);
+    } catch (e) {
+      print(e);
+    }
+  }
 
-        _previewHeight = 120;
-      });
-    } catch (e){
+  Future<void> _checkHttp(String url) async {
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          _previewGate = true;
+          _previewHeight = 120;
+        });
+      } else {
+        setState(() {
+          _previewGate = false;
+          _previewHeight = 0;
+        });
+      }
+    } catch (e) {
       setState(() {
         _previewHeight = 0;
       });
@@ -90,24 +80,7 @@ class _RandomWordsState extends State<RandomWords> {
     }
   }
 
-  Future<void> _checkHttp(String url) async {
-    try{
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        setState(() {
-          _previewGate = true;
-        });
-      } else {
-        setState(() {
-          _previewGate = false;
-        });
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  Widget _buildAppBar(BuildContext context){
+  Widget _buildAppBar(BuildContext context) {
     return AppBar(
       actions: <Widget>[
         IconButton(
@@ -116,7 +89,7 @@ class _RandomWordsState extends State<RandomWords> {
           onPressed: () {
             String copyString = "";
             _markedMessages.forEach(
-                    (i) => copyString = copyString + _chatHistory[i] + " ");
+                (i) => copyString = copyString + _chatHistory[i] + " ");
             Clipboard.setData(ClipboardData(text: copyString));
             setState(() {
               _markedMessages.clear();
@@ -129,7 +102,7 @@ class _RandomWordsState extends State<RandomWords> {
           onPressed: () {
             String shareString = "";
             _markedMessages.forEach(
-                    (i) => shareString = shareString + _chatHistory[i] + " ");
+                (i) => shareString = shareString + _chatHistory[i] + " ");
             Share.share(shareString);
             setState(() {
               _markedMessages.clear();
@@ -151,7 +124,7 @@ class _RandomWordsState extends State<RandomWords> {
     );
   }
 
-  Widget _buildChatList(BuildContext context){
+  Widget _buildChatList(BuildContext context) {
     return Expanded(
       child: ListView.builder(
         itemBuilder: (BuildContext context, int index) {
@@ -172,8 +145,7 @@ class _RandomWordsState extends State<RandomWords> {
               }
             },
             child: Bubble(
-                color: color,
-                child: _superTest(_chatHistory[index], index)),
+                color: color, child: Text(_chatHistory[index])),
           );
         },
         itemCount: _chatHistory.length,
@@ -183,23 +155,34 @@ class _RandomWordsState extends State<RandomWords> {
     );
   }
 
-  Widget _buildLinkPreview(BuildContext context){
+  Widget _buildLinkPreview(BuildContext context) {
     return Container(
       height: _previewHeight,
-      child: Row(
-          children: [Container(
-            width: 50,
-            height: 50,
-            child: _linkImage != null ? Image.network(_linkImage) : Text("Kein Bild"),
-          ),Container(
-            width: 100,
-            child: _linkTitle != null ? Text(_linkTitle) : Text("Kein Titel"),
-          ),
-          ]),
+      child: Row(children: [
+        Container(
+          width: 50,
+          height: 50,
+          child: _webMetaInfo.image != null
+              ? Image.network(_webMetaInfo.image)
+              : Text("Kein Bild"),
+        ),
+        Container(
+          width: 100,
+          child: _webMetaInfo.title != null
+              ? Text(_webMetaInfo.title)
+              : Text("Kein Titel"),
+        ),
+        Container(
+          width: 100,
+          child: _webMetaInfo.description != null
+              ? Text(_webMetaInfo.description)
+              : Text("Keine Beschreibung"),
+        ),
+      ]),
     );
   }
 
-  Widget _buildKeyboardBar(BuildContext context){
+  Widget _buildKeyboardBar(BuildContext context) {
     return Row(children: [
       Container(
           width: 100,
@@ -213,9 +196,10 @@ class _RandomWordsState extends State<RandomWords> {
             },
             controller: myController,
             onChanged: (changedString) {
-              if(changedString != _oldString){
+              if (changedString != _oldString) {
                 _oldString = changedString;
-                if(changedString.startsWith("https://") || changedString.startsWith("http://")){
+                if (changedString.startsWith("https://") ||
+                    changedString.startsWith("http://")) {
                   _checkHttp(changedString);
                 } else {
                   setState(() {
@@ -225,7 +209,11 @@ class _RandomWordsState extends State<RandomWords> {
                 }
               }
               if (_previewGate) {
-                _getHttpTest(changedString);
+                setState(() {
+                  _webMetaInfo.getMetaInfo(changedString);
+                });
+              } else {
+                _previewHeight = 0;
               }
             },
             onSubmitted: (chatText) {
@@ -262,13 +250,30 @@ class _RandomWordsState extends State<RandomWords> {
       )
     ]);
   }
+
+  Widget _buildEmojiPicker(BuildContext context) {
+    return Container(
+      height: _emojiPickerHeight,
+      child: EmojiPicker(
+        rows: 3,
+        columns: 7,
+        recommendKeywords: ["racing", "horse"],
+        numRecommended: 10,
+        onEmojiSelected: (emoji, category) {
+          myController.text = myController.text + emoji.emoji;
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[_buildChatList(context),
+        children: <Widget>[
+          _buildChatList(context),
           Container(
               height: 50 + _previewHeight,
               color: Colors.green[50],
@@ -278,18 +283,7 @@ class _RandomWordsState extends State<RandomWords> {
                   _buildKeyboardBar(context)
                 ],
               )),
-          Container(
-            height: _emojiPickerHeight,
-            child: EmojiPicker(
-              rows: 3,
-              columns: 7,
-              recommendKeywords: ["racing", "horse"],
-              numRecommended: 10,
-              onEmojiSelected: (emoji, category) {
-                myController.text = myController.text + emoji.emoji;
-              },
-            ),
-          )
+          _buildEmojiPicker(context)
         ],
       ),
     );
