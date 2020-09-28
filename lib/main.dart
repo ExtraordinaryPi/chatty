@@ -42,21 +42,11 @@ class _RandomWordsState extends State<RandomWords> {
   bool _showEmojis = false;
   double _emojiPickerHeight = 0;
   final _markedMessages = List<int>();
-  final _metaInfoCacheIndex = List<int>();
   double _previewHeight = 0;
   bool _previewGate = false;
   String _oldString;
   WebMetaInfo _webMetaInfo = WebMetaInfo(null, null, null);
   final _metaInfoCacheMap = Map<int, WebMetaInfo>();
-
-
-  void _getHttpTest(String url) async {
-    try {
-      _webMetaInfo.getMetaInfo(url);
-    } catch (e) {
-      print(e);
-    }
-  }
 
   Future<void> _checkHttp(String url) async {
     try {
@@ -129,8 +119,53 @@ class _RandomWordsState extends State<RandomWords> {
       child: ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           Color color = Colors.white;
+          int mapIndex = _chatHistory.length - index - 1;
           if (_markedMessages.contains(index)) {
             color = Colors.yellow;
+          }
+
+          if (_metaInfoCacheMap.containsKey(mapIndex)) {
+            return GestureDetector(
+              onLongPress: () {
+                if (_markedMessages.contains(index)) {
+                  setState(() {
+                    _markedMessages.remove(index);
+                  });
+                } else {
+                  setState(() {
+                    _markedMessages.add(index);
+                  });
+                }
+              },
+              child: Bubble(
+                  color: color,
+                  child: Column(
+                    children: [
+                      Row(children: [
+                        Container(
+                          width: _metaInfoCacheMap[mapIndex].pictureOnly == false ? 100 : 200,
+                          height: _metaInfoCacheMap[mapIndex].pictureOnly == false ? 50 : 100,
+                          child: _metaInfoCacheMap[mapIndex].image != null
+                              ? Image.network(_metaInfoCacheMap[mapIndex].image)
+                              : Container(),
+                        ),
+                        Container(
+                          width: _metaInfoCacheMap[mapIndex].pictureOnly == false ? 100 : 0,
+                          child: _metaInfoCacheMap[mapIndex].title != null &&  _metaInfoCacheMap[mapIndex].pictureOnly == false
+                              ? Text(_metaInfoCacheMap[mapIndex].title)
+                              : Container(),
+                        ),
+                        Container(
+                          width: _metaInfoCacheMap[mapIndex].pictureOnly == false ? 100 : 0,
+                          child: _metaInfoCacheMap[mapIndex].description != null &&  _metaInfoCacheMap[mapIndex].pictureOnly == false
+                              ? Text(_metaInfoCacheMap[mapIndex].description)
+                              : Container(),
+                        ),
+                      ]),
+                      Text(_chatHistory[index]),
+                    ],
+                  )),
+            );
           }
           return GestureDetector(
             onLongPress: () {
@@ -144,8 +179,7 @@ class _RandomWordsState extends State<RandomWords> {
                 });
               }
             },
-            child: Bubble(
-                color: color, child: Text(_chatHistory[index])),
+            child: Bubble(color: color, child: Text(_chatHistory[index])),
           );
         },
         itemCount: _chatHistory.length,
@@ -160,20 +194,20 @@ class _RandomWordsState extends State<RandomWords> {
       height: _previewHeight,
       child: Row(children: [
         Container(
-          width: 50,
-          height: 50,
+          width:  _webMetaInfo.pictureOnly == false ? 100 : 200,
+          height: _webMetaInfo.pictureOnly == false ? 50 : 100,
           child: _webMetaInfo.image != null
               ? Image.network(_webMetaInfo.image)
               : Text("Kein Bild"),
         ),
         Container(
-          width: 100,
+          width: _webMetaInfo.pictureOnly == false ? 100 : 0,
           child: _webMetaInfo.title != null
               ? Text(_webMetaInfo.title)
               : Text("Kein Titel"),
         ),
         Container(
-          width: 100,
+          width: _webMetaInfo.pictureOnly == false ? 100 : 0,
           child: _webMetaInfo.description != null
               ? Text(_webMetaInfo.description)
               : Text("Keine Beschreibung"),
@@ -209,14 +243,33 @@ class _RandomWordsState extends State<RandomWords> {
                 }
               }
               if (_previewGate) {
+                String url = changedString.toLowerCase();
+                if(url.endsWith(".apng") ||
+                    url.endsWith(".bmp") ||
+                    url.endsWith(".gif") ||
+                    url.endsWith(".ico") ||
+                    url.endsWith(".jpeg")||
+                    url.endsWith(".png") ||
+                    url.endsWith(".svg") ||
+                    url.endsWith(".webp")){
+                  setState(() {
+                    _webMetaInfo.getPicture(changedString);
+                  });
+                } else {
                 setState(() {
                   _webMetaInfo.getMetaInfo(changedString);
                 });
-              } else {
+              }} else {
                 _previewHeight = 0;
               }
             },
             onSubmitted: (chatText) {
+              if (_previewHeight > 10) {
+                setState(() {
+                _metaInfoCacheMap[_chatHistory.length] = _webMetaInfo;
+                _previewHeight = 0;
+              });
+              }
               setState(() {
                 _chatHistory.insert(0, chatText);
               });
