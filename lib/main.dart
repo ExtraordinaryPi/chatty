@@ -118,14 +118,145 @@ class _RandomWordsState extends State<RandomWords> {
     return Expanded(
       child: ListView.builder(
         itemBuilder: (BuildContext context, int index) {
-          Color color = Colors.white;
+          Color colorSender = Color.fromRGBO(225, 255, 199, 1.0);
+          Alignment alignmentSender = Alignment.topRight;
+          BubbleNip bubbleNipSender = BubbleNip.rightTop;
           int mapIndex = _chatHistory.length - index - 1;
           if (_markedMessages.contains(index)) {
-            color = Colors.yellow;
+            colorSender = Colors.yellow;
           }
 
           if (_metaInfoCacheMap.containsKey(mapIndex)) {
             return GestureDetector(
+                onLongPress: () {
+                  if (_markedMessages.contains(index)) {
+                    setState(() {
+                      _markedMessages.remove(index);
+                    });
+                  } else {
+                    setState(() {
+                      _markedMessages.add(index);
+                    });
+                  }
+                },
+                child: Bubble(
+                    color: colorSender,
+                    alignment: alignmentSender,
+                    nip: bubbleNipSender,
+                    margin: BubbleEdges.only(top: 10),
+                    child: _metaInfoCacheMap[mapIndex].pictureOnly == false
+                        ? Column(children: [
+                            Container(
+                              alignment: Alignment.topLeft,
+                              child: RichText(
+                                text: new TextSpan(
+                                  // Note: Styles for TextSpans must be explicitly defined.
+                                  // Child text spans will inherit styles from parent
+                                  style: new TextStyle(
+                                    fontSize: 14.0,
+                                    color: Colors.black,
+                                  ),
+                                  children: <TextSpan>[
+                                    new TextSpan(
+                                        text: 'Du\n',
+                                        style: new TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: _metaInfoCacheMap[mapIndex]
+                                              .pictureOnly ==
+                                          false
+                                      ? MediaQuery.of(context).size.width * 0.15
+                                      : MediaQuery.of(context).size.width * 0.9,
+                                  height: _metaInfoCacheMap[mapIndex]
+                                              .pictureOnly ==
+                                          false
+                                      ? MediaQuery.of(context).size.height *
+                                          0.10
+                                      : MediaQuery.of(context).size.width * 0.3,
+                                  alignment: Alignment.topCenter,
+                                  child:
+                                      _metaInfoCacheMap[mapIndex].image != null
+                                          ? Image.network(
+                                              _metaInfoCacheMap[mapIndex].image)
+                                          : Text("Kein Bild"),
+                                ),
+                                Container(
+                                  width: _metaInfoCacheMap[mapIndex]
+                                              .pictureOnly ==
+                                          false
+                                      ? MediaQuery.of(context).size.width * 0.75
+                                      : 0,
+                                  height:
+                                      _metaInfoCacheMap[mapIndex].pictureOnly ==
+                                              false
+                                          ? MediaQuery.of(context).size.height *
+                                              0.10
+                                          : 0,
+                                  child: _metaInfoCacheMap[mapIndex].title !=
+                                          null
+                                      ? Text(_metaInfoCacheMap[mapIndex].title)
+                                      : Text("Kein Titel"),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              width: _metaInfoCacheMap[mapIndex].pictureOnly ==
+                                      false
+                                  ? MediaQuery.of(context).size.width
+                                  : 0,
+                              height: _metaInfoCacheMap[mapIndex].pictureOnly ==
+                                      false
+                                  ? MediaQuery.of(context).size.height * 0.10
+                                  : 0,
+                              child: _metaInfoCacheMap[mapIndex].description !=
+                                      null
+                                  ? Text(
+                                      _metaInfoCacheMap[mapIndex].description)
+                                  : Text("Keine Beschreibung"),
+                            ),
+                          ])
+                        : Column(
+                            children: [
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                alignment: Alignment.topLeft,
+                                child: RichText(
+                                  text: new TextSpan(
+                                    // Note: Styles for TextSpans must be explicitly defined.
+                                    // Child text spans will inherit styles from parent
+                                    style: new TextStyle(
+                                      fontSize: 14.0,
+                                      color: Colors.black,
+                                    ),
+                                    children: <TextSpan>[
+                                      new TextSpan(
+                                          text: 'Du\n',
+                                          style: new TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                alignment: Alignment.topCenter,
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                height:
+                                    MediaQuery.of(context).size.height * 0.2,
+                                child: _metaInfoCacheMap[mapIndex].image != null
+                                    ? Image.network(
+                                        _metaInfoCacheMap[mapIndex].image)
+                                    : Text("Kein Bild"),
+                              ),
+                            ],
+                          )));
+          }
+          return GestureDetector(
               onLongPress: () {
                 if (_markedMessages.contains(index)) {
                   setState(() {
@@ -138,64 +269,29 @@ class _RandomWordsState extends State<RandomWords> {
                 }
               },
               child: Bubble(
-                color: color,
-                child: Column(children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                            ? MediaQuery.of(context).size.width * 0.15
-                            : 200,
-                        height: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                            ? MediaQuery.of(context).size.height * 0.10
-                            : 100,
-                        alignment: Alignment.topCenter,
-                        child: _metaInfoCacheMap[mapIndex].image != null
-                            ? Image.network(_metaInfoCacheMap[mapIndex].image)
-                            : Text("Kein Bild"),
-                      ),
-                      Container(
-                        width: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                            ? MediaQuery.of(context).size.width * 0.75
-                            : 0,
-                        height: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                            ? MediaQuery.of(context).size.height * 0.10
-                            : 0,
-                        child: _metaInfoCacheMap[mapIndex].title != null
-                            ? Text(_metaInfoCacheMap[mapIndex].title)
-                            : Text("Kein Titel"),
-                      ),
+                color: colorSender,
+                alignment: alignmentSender,
+                nip: bubbleNipSender,
+                margin: BubbleEdges.only(top: 10),
+                child: RichText(
+                  text: new TextSpan(
+                    // Note: Styles for TextSpans must be explicitly defined.
+                    // Child text spans will inherit styles from parent
+                    style: new TextStyle(
+                      fontSize: 14.0,
+                      color: Colors.black,
+                    ),
+                    children: <TextSpan>[
+                      new TextSpan(
+                          text: 'Du\n',
+                          style: new TextStyle(fontWeight: FontWeight.bold)),
+                      new TextSpan(
+                          text: _chatHistory[index],
+                          style: new TextStyle(fontSize: 17.0)),
                     ],
                   ),
-                  Container(
-                    width: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                        ? MediaQuery.of(context).size.width
-                        : 0,
-                    height: _metaInfoCacheMap[mapIndex].pictureOnly == false
-                        ? MediaQuery.of(context).size.height * 0.10
-                        : 0,
-                    child: _metaInfoCacheMap[mapIndex].description != null
-                        ? Text(_metaInfoCacheMap[mapIndex].description)
-                        : Text("Keine Beschreibung"),
-                  ),
-                ]),
-              ),
-            );
-          }
-          return GestureDetector(
-            onLongPress: () {
-              if (_markedMessages.contains(index)) {
-                setState(() {
-                  _markedMessages.remove(index);
-                });
-              } else {
-                setState(() {
-                  _markedMessages.add(index);
-                });
-              }
-            },
-            child: Bubble(color: color, child: Text(_chatHistory[index])),
-          );
+                ),
+              ));
         },
         itemCount: _chatHistory.length,
         shrinkWrap: true,
@@ -283,6 +379,7 @@ class _RandomWordsState extends State<RandomWords> {
                     url.endsWith(".gif") ||
                     url.endsWith(".ico") ||
                     url.endsWith(".jpeg") ||
+                    url.endsWith(".jpg") ||
                     url.endsWith(".png") ||
                     url.endsWith(".svg") ||
                     url.endsWith(".webp")) {
