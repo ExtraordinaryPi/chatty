@@ -20,6 +20,15 @@ class WebMetaInfo {
   return this;
   }
 
+  WebMetaInfo clone(){
+    WebMetaInfo webMetaInfo = new WebMetaInfo(this.title, this.image, this.description);
+    webMetaInfo.title = this.title;
+    webMetaInfo.pictureOnly = this.pictureOnly;
+    webMetaInfo.description = this.description;
+    webMetaInfo.image = this.image;
+    return webMetaInfo;
+  }
+
   Future<WebMetaInfo> getMetaInfo(String url) async{
     try {
       var data = await extract(url); // Use the extract() function to fetch data from the url
